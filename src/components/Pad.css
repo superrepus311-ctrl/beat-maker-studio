@@ -1,0 +1,52 @@
+.pad {
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(102, 126, 234, 0.5);
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.pad:hover {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.8);
+}
+
+.pad.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  box-shadow: 0 0 10px rgba(102, 126, 234, 0.6);
+}
+
+.pad.active:hover {
+  box-shadow: 0 0 15px rgba(102, 126, 234, 0.8);
+  transform: scale(1.05);
+}
+
+.pad.playing {
+  animation: pulse 0.1s ease-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.6);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.6);
+  }
+}
+
+@media (max-width: 768px) {
+  .pad {
+    width: 32px;
+    height: 32px;
+  }
+}

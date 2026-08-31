@@ -1,0 +1,93 @@
+.beat-maker {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2rem;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.beat-maker-controls {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.bpm-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bpm-control label {
+  font-weight: 600;
+  min-width: 100px;
+}
+
+.bpm-slider {
+  width: 150px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.clear-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+  transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.5);
+}
+
+.beat-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.beat-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.note-label {
+  min-width: 50px;
+  font-weight: 600;
+  text-align: center;
+  background: rgba(102, 126, 234, 0.2);
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid rgba(102, 126, 234, 0.4);
+}
+
+.pads-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .beat-maker {
+    padding: 1rem;
+  }
+
+  .beat-maker-controls {
+    gap: 1rem;
+  }
+
+  .pads-row {
+    gap: 0.25rem;
+  }
+}
