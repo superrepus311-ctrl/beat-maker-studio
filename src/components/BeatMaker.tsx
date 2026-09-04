@@ -7,12 +7,8 @@ interface BeatMakerProps {
   isPlaying: boolean
 }
 
-interface Synth {
-  triggerAttackRelease: (note: string, duration: string) => void
-}
-
 const BeatMaker = ({ isPlaying }: BeatMakerProps) => {
-  const synthRef = useRef<Synth | null>(null)
+  const synthRef = useRef<Tone.PolySynth<Tone.Synth> | null>(null)
   const [bpm, setBpm] = useState(120)
   const [notes] = useState(['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'])
   const [steps, setSteps] = useState<Set<string>>(new Set())
@@ -50,21 +46,23 @@ const BeatMaker = ({ isPlaying }: BeatMakerProps) => {
       return
     }
 
-    const now = Tone.now()
     const stepDuration = 0.25 // 16th notes
 
     // Schedule notes
     const scheduleStep = (stepIndex: number) => {
-      const stepNote = `${stepIndex % 8}-${Math.floor(stepIndex / 8)}`
-      if (steps.has(stepNote) && synthRef.current) {
-        synthRef.current.triggerAttackRelease(notes[stepIndex % 8], '8n')
+      const noteIndex = stepIndex % notes.length
+      const beatIndex = Math.floor(stepIndex / notes.length)
+      const stepId = `${noteIndex}-${beatIndex}`
+      
+      if (steps.has(stepId) && synthRef.current) {
+        synthRef.current.triggerAttackRelease(notes[noteIndex], '8n')
       }
     }
 
     // Create a loop
     const loopId = Tone.Loop((time) => {
       scheduleStep(stepCounterRef.current)
-      stepCounterRef.current = (stepCounterRef.current + 1) % (8 * 8)
+      stepCounterRef.current = (stepCounterRef.current + 1) % (notes.length * 16)
     }, stepDuration).start(0)
 
     return () => {
@@ -72,8 +70,8 @@ const BeatMaker = ({ isPlaying }: BeatMakerProps) => {
     }
   }, [isPlaying, steps, notes])
 
-  const toggleStep = (note: string, step: number) => {
-    const stepId = `${note}-${step}`
+  const toggleStep = (noteIndex: number, step: number) => {
+    const stepId = `${noteIndex}-${step}`
     const newSteps = new Set(steps)
     if (newSteps.has(stepId)) {
       newSteps.delete(stepId)
@@ -115,7 +113,7 @@ const BeatMaker = ({ isPlaying }: BeatMakerProps) => {
                 <Pad
                   key={`${note}-${stepIndex}`}
                   isActive={steps.has(`${noteIndex}-${stepIndex}`)}
-                  onClick={() => toggleStep(`${noteIndex}`, stepIndex)}
+                  onClick={() => toggleStep(noteIndex, stepIndex)}
                   isPlaying={isPlaying && stepCounterRef.current === noteIndex * 16 + stepIndex}
                 />
               ))}
