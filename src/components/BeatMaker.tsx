@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import * as Tone from 'tone'
 import Pad from './Pad'
 import './BeatMaker.css'
@@ -12,10 +12,13 @@ const BeatMaker = ({ isPlaying }: BeatMakerProps) => {
   const [bpm, setBpm] = useState(120)
   const [notes] = useState(['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'])
   const [steps, setSteps] = useState<Set<string>>(new Set())
+  const [volume, setVolume] = useState(-12)
+  const [currentStep, setCurrentStep] = useState(0)
   const stepCounterRef = useRef(0)
+  const loopRef = useRef<Tone.Loop | null>(null)
 
+  // Initialize synth
   useEffect(() => {
-    // Create synth
     synthRef.current = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'triangle' },
       envelope: {
@@ -26,7 +29,10 @@ const BeatMaker = ({ isPlaying }: BeatMakerProps) => {
       },
     }).toDestination()
 
-    // Set initial BPM
+    // Set initial volume and BPM
+    if (synthRef.current) {
+      synthRef.current.volume.value = volume
+    }
     Tone.Transport.bpm.value = bpm
 
     return () => {
@@ -36,54 +42,100 @@ const BeatMaker = ({ isPlaying }: BeatMakerProps) => {
     }
   }, [])
 
+  // Update BPM when it changes
   useEffect(() => {
     Tone.Transport.bpm.value = bpm
   }, [bpm])
 
+  // Update volume when it changes
   useEffect(() => {
+    if (synthRef.current) {
+      synthRef.current.volume.value = volume
+    }
+  }, [volume])
+
+  // Main playback loop
+  useEffect(() => {
+    if (loopRef.current) {
+      loopRef.current.dispose()
+      loopRef.current = null
+    }
+
     if (!isPlaying) {
       stepCounterRef.current = 0
+      setCurrentStep(0)
       return
     }
 
     const stepDuration = 0.25 // 16th notes
+    const totalSteps = 16
 
-    // Schedule notes
     const scheduleStep = (stepIndex: number) => {
-      const noteIndex = stepIndex % notes.length
-      const beatIndex = Math.floor(stepIndex / notes.length)
-      const stepId = `${noteIndex}-${beatIndex}`
-      
-      if (steps.has(stepId) && synthRef.current) {
-        synthRef.current.triggerAttackRelease(notes[noteIndex], '8n')
+      const step = stepIndex % totalSteps
+      for (let noteIndex = 0; noteIndex < notes.length; noteIndex++) {
+        const stepId = `${noteIndex}-${step}`
+        
+        if (steps.has(stepId) && synthRef.current) {
+          synthRef.current.triggerAttackRelease(notes[noteIndex], '8n')
+        }
       }
+      
+      setCurrentStep(step)
+      stepCounterRef.current = (stepCounterRef.current + 1) % totalSteps
     }
 
-    // Create a loop
-    const loopId = Tone.Loop((time) => {
+    // Create and start loop
+    loopRef.current = new Tone.Loop((time) => {
       scheduleStep(stepCounterRef.current)
-      stepCounterRef.current = (stepCounterRef.current + 1) % (notes.length * 16)
-    }, stepDuration).start(0)
+    }, stepDuration)
+    
+    loopRef.current.start(0)
 
     return () => {
-      loopId.dispose()
+      if (loopRef.current) {
+        loopRef.current.dispose()
+        loopRef.current = null
+      }
     }
   }, [isPlaying, steps, notes])
 
-  const toggleStep = (noteIndex: number, step: number) => {
+  const toggleStep = useCallback((noteIndex: number, step: number) => {
     const stepId = `${noteIndex}-${step}`
-    const newSteps = new Set(steps)
-    if (newSteps.has(stepId)) {
-      newSteps.delete(stepId)
-    } else {
-      newSteps.add(stepId)
-    }
-    setSteps(newSteps)
-  }
+    setSteps((prev) => {
+      const newSteps = new Set(prev)
+      if (newSteps.has(stepId)) {
+        newSteps.delete(stepId)
+      } else {
+        newSteps.add(stepId)
+      }
+      return newSteps
+    })
+  }, [])
 
-  const clearAll = () => {
+  const clearAll = useCallback(() => {
     setSteps(new Set())
-  }
+  }, [])
+
+  const savePattern = useCallback(() => {
+    const pattern = Array.from(steps)
+    localStorage.setItem('beatMakerPattern', JSON.stringify(pattern))
+    alert('Pattern saved!')
+  }, [steps])
+
+  const loadPattern = useCallback(() => {
+    const saved = localStorage.getItem('beatMakerPattern')
+    if (saved) {
+      try {
+        const pattern = JSON.parse(saved)
+        setSteps(new Set(pattern))
+        alert('Pattern loaded!')
+      } catch (error) {
+        alert('Failed to load pattern')
+      }
+    } else {
+      alert('No saved pattern found')
+    }
+  }, [])
 
   return (
     <div className="beat-maker">
@@ -99,9 +151,30 @@ const BeatMaker = ({ isPlaying }: BeatMakerProps) => {
             className="bpm-slider"
           />
         </div>
-        <button className="clear-btn" onClick={clearAll}>
-          🗑️ Clear All
-        </button>
+
+        <div className="volume-control">
+          <label>Volume: {volume}dB</label>
+          <input
+            type="range"
+            min="-60"
+            max="0"
+            value={volume}
+            onChange={(e) => setVolume(Number(e.target.value))}
+            className="volume-slider"
+          />
+        </div>
+
+        <div className="button-group">
+          <button className="clear-btn" onClick={clearAll}>
+            🗑️ Clear
+          </button>
+          <button className="save-btn" onClick={savePattern}>
+            💾 Save
+          </button>
+          <button className="load-btn" onClick={loadPattern}>
+            📂 Load
+          </button>
+        </div>
       </div>
 
       <div className="beat-grid">
@@ -114,12 +187,16 @@ const BeatMaker = ({ isPlaying }: BeatMakerProps) => {
                   key={`${note}-${stepIndex}`}
                   isActive={steps.has(`${noteIndex}-${stepIndex}`)}
                   onClick={() => toggleStep(noteIndex, stepIndex)}
-                  isPlaying={isPlaying && stepCounterRef.current === noteIndex * 16 + stepIndex}
+                  isPlaying={isPlaying && currentStep === stepIndex}
                 />
               ))}
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="step-indicator">
+        Step: <span className="step-number">{currentStep + 1}</span> / 16
       </div>
     </div>
   )

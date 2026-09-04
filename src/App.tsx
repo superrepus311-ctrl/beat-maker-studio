@@ -6,14 +6,37 @@ import './App.css'
 function App() {
   const [isAudioReady, setIsAudioReady] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const initAudio = async () => {
       try {
-        await Tone.start()
-        setIsAudioReady(true)
+        // Enable audio context on user interaction
+        const handleInteraction = async () => {
+          try {
+            await Tone.start()
+            setIsAudioReady(true)
+            setError(null)
+            // Remove listener after successful initialization
+            document.removeEventListener('click', handleInteraction)
+            document.removeEventListener('keydown', handleInteraction)
+          } catch (err) {
+            console.error('Failed to start audio:', err)
+            setError('Failed to initialize audio. Please try clicking again.')
+          }
+        }
+
+        // Add listeners for first user interaction
+        document.addEventListener('click', handleInteraction)
+        document.addEventListener('keydown', handleInteraction)
+
+        return () => {
+          document.removeEventListener('click', handleInteraction)
+          document.removeEventListener('keydown', handleInteraction)
+        }
       } catch (error) {
-        console.error('Failed to initialize audio:', error)
+        console.error('Audio initialization error:', error)
+        setError('Failed to initialize audio system')
       }
     }
 
@@ -21,14 +44,33 @@ function App() {
   }, [])
 
   const handlePlayToggle = () => {
-    if (!isAudioReady) return
+    if (!isAudioReady) {
+      setError('Audio engine not ready. Please click to initialize.')
+      return
+    }
 
-    if (Tone.Transport.state === 'started') {
+    try {
+      if (Tone.Transport.state === 'started') {
+        Tone.Transport.stop()
+        setIsPlaying(false)
+      } else {
+        Tone.Transport.start()
+        setIsPlaying(true)
+      }
+      setError(null)
+    } catch (error) {
+      console.error('Playback error:', error)
+      setError('Failed to toggle playback')
+    }
+  }
+
+  const handleStop = () => {
+    try {
       Tone.Transport.stop()
       setIsPlaying(false)
-    } else {
-      Tone.Transport.start()
-      setIsPlaying(true)
+      setError(null)
+    } catch (error) {
+      console.error('Stop error:', error)
     }
   }
 
@@ -40,6 +82,12 @@ function App() {
       </header>
 
       <main className="app-main">
+        {error && (
+          <div className="error-message">
+            ⚠️ {error}
+          </div>
+        )}
+
         {isAudioReady ? (
           <>
             <div className="controls">
@@ -47,20 +95,32 @@ function App() {
                 className={`play-btn ${isPlaying ? 'playing' : ''}`}
                 onClick={handlePlayToggle}
               >
-                {isPlaying ? '⏸ Stop' : '▶ Play'}
+                {isPlaying ? '⏸ Pause' : '▶ Play'}
               </button>
+              {isPlaying && (
+                <button
+                  className="stop-btn"
+                  onClick={handleStop}
+                >
+                  ⏹ Stop
+                </button>
+              )}
             </div>
             <BeatMaker isPlaying={isPlaying} />
           </>
         ) : (
           <div className="loading">
-            <p>🔊 Click anywhere to start the audio engine...</p>
+            <p>🔊 Click anywhere to initialize audio engine...</p>
+            <div className="loading-spinner"></div>
           </div>
         )}
       </main>
 
       <footer className="app-footer">
-        <p>Made with React + Tone.js</p>
+        <p>Made with React + Tone.js • Production Ready v1.0</p>
+        <p className="audio-status">
+          {isAudioReady ? '✅ Audio Ready' : '⏳ Initializing...'}
+        </p>
       </footer>
     </div>
   )

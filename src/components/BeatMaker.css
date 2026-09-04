@@ -17,36 +17,73 @@
   flex-wrap: wrap;
 }
 
-.bpm-control {
+.bpm-control,
+.volume-control {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.bpm-control label {
+.bpm-control label,
+.volume-control label {
   font-weight: 600;
-  min-width: 100px;
+  min-width: 120px;
+  white-space: nowrap;
 }
 
-.bpm-slider {
+.bpm-slider,
+.volume-slider {
   width: 150px;
   cursor: pointer;
   accent-color: #667eea;
 }
 
-.clear-btn {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.clear-btn,
+.save-btn,
+.load-btn {
   color: white;
-  padding: 10px 20px;
+  padding: 10px 16px;
   font-weight: 600;
   border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.clear-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
 }
 
 .clear-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(245, 87, 108, 0.5);
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  box-shadow: 0 2px 8px rgba(79, 172, 254, 0.3);
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.5);
+}
+
+.load-btn {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  box-shadow: 0 2px 8px rgba(67, 233, 123, 0.3);
+}
+
+.load-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(67, 233, 123, 0.5);
 }
 
 .beat-grid {
@@ -78,6 +115,34 @@
   gap: 0.5rem;
 }
 
+.step-indicator {
+  text-align: center;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.75rem;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.step-number {
+  font-weight: 700;
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 1024px) {
+  .beat-maker-controls {
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .button-group {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 768px) {
   .beat-maker {
     padding: 1rem;
@@ -85,9 +150,63 @@
 
   .beat-maker-controls {
     gap: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bpm-control,
+  .volume-control {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bpm-slider,
+  .volume-slider {
+    width: 100%;
+  }
+
+  .button-group {
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .clear-btn,
+  .save-btn,
+  .load-btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 0.9rem;
   }
 
   .pads-row {
     gap: 0.25rem;
+  }
+
+  .beat-row {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .beat-maker {
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+
+  .note-label {
+    min-width: 40px;
+    padding: 0.25rem;
+    font-size: 0.9rem;
+  }
+
+  .clear-btn,
+  .save-btn,
+  .load-btn {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
+
+  .step-indicator {
+    font-size: 0.85rem;
   }
 }
